@@ -1,28 +1,61 @@
 // Basic Arduino Code Example for HC-SR04
  
-const int trigPin = 9;
-const int echoPin = 10;
+const int trigPin = 13;
+const int echoPin = 12;
 long duration;
 int distance;
+bool passed = false;
  
+int _delay = 50;
+
+
+
+long time_begin;
+long time_end; 
+
 void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   Serial.begin(9600);
+  
 }
- 
+
 void loop() {
+  
+
+  //Send Ultrasonic signal out for 
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
- 
-  duration = pulseIn(echoPin, HIGH);
+  
+  //Get How long Ultrasonic sensor was high, and convert to cms
+  duration = pulseIn(echoPin, HIGH,5000);;
   distance = duration * 0.034 / 2;
  
-  Serial.print("Distance: ");
-  Serial.print(distance);
-  Serial.println(" cm");
-  delay(500);
+  if (distance != 0 & !passed)
+  {
+    passed = true;
+
+    Serial.println("");
+    Serial.println("Hey the train passed me");
+    time_begin = millis();
+    int _delay = 500;
+    }
+  else if (distance == 0 & passed == true) {
+    passed = false;
+    Serial.println("The train has finished passing me");
+    time_end = millis();
+    Serial.print("Time That passed: ");
+    Serial.println(time_end - time_begin);
+  }
+  //Ultrasonic Output
+  //Serial.print("Distance: ");
+  //Serial.print(distance);
+  //Serial.println(" cm");
+  
+
+  //Serial_Delay
+  delay(_delay);
 }
