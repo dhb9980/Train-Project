@@ -1,0 +1,20 @@
+const int pirPin = 2; // Digital pin connected to sensor's OUT pin (Digital Pin #2)
+int sensorState = 0;  // Variable to store reading
+
+void setup() {
+  pinMode(pirPin, INPUT);     // Set PIR pin as input
+  Serial.begin(9600);         // Start serial communication
+  delay(2000);                // 2 seconds delay
+}
+
+void loop() {
+  sensorState = digitalRead(pirPin); // Read the sensor output
+
+  if (sensorState == HIGH) {
+    Serial.println("Motion detected!");
+  } else {
+    Serial.println("No motion.");
+  }
+
+  delay(100); // Small delay to avoid flooding the serial monitor
+}
