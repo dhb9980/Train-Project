@@ -1,0 +1,101 @@
+//Declare Pins
+const int trigPin = 13;
+const int echoPin = 12;
+
+
+//Testing variables
+long duration;
+float distance;
+bool testing = false;
+
+//Global variables
+long duration_covered;
+
+
+//Ultrasound Variables
+long when_covered;
+bool covered = false;
+
+//TODO account for breaks in the train
+long when_uncovered;
+long duration_uncovered;
+bool just_uncovered = false;
+
+
+
+void setup() {
+  //Ultrasonic
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  digitalWrite(trigPin, LOW);
+  delay(1000);
+
+  //Infared
+  //TODO//
+
+  //Motion
+  //TODO//
+
+  //Debug
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  //Detection Information for Ultrasonic
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+
+  duration = pulseIn(echoPin, HIGH, 5000);
+
+  //Nothing detected
+  if (duration == 0) {
+    if (testing) {
+    Serial.println("No echo detected!");
+    }
+    //TODO check for breaks in the train
+
+
+    //Stops the counter, returns duration covered (The end of the train has passed)
+    if (covered) {
+      duration_covered = millis() - when_covered;
+      Serial.println("");
+      Serial.print("Covered for (millis):");
+      Serial.println(duration_covered);
+      covered = false;
+
+    }
+    
+  }
+  //Setting covered to true 
+  else {
+    //Only sets 'when_covered' the first time the sensor detects it is covered
+    if (!covered) {
+      when_covered = millis();
+      covered = true;
+    }
+    distance = duration * 0.0343 / 2.0;
+
+
+
+
+
+    //Debug Distance information
+    if (testing) {
+      Serial.print("Duration: ");
+      Serial.print(duration);
+      Serial.print(" us   Distance: ");
+      Serial.print(distance);
+      Serial.println(" cm");
+    }
+    //End Debug Distance information
+
+  }
+
+  delay(500);
+}
