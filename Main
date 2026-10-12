@@ -1,7 +1,7 @@
 //Declare Pins
 const int trigPin = 13;
 const int echoPin = 12;
-
+const int irPin = 11;
 
 //Testing variables
 long duration;
@@ -9,7 +9,8 @@ float distance;
 bool testing = false;
 
 //Global variables
-long duration_covered;
+long duration_covered_us;
+long duration_between_sensors;
 
 
 //Ultrasound Variables
@@ -22,6 +23,12 @@ long duration_uncovered;
 bool just_uncovered = false;
 
 
+//IR Sensor Variables
+bool ir_tripped = false;
+bool passing = false;
+long when_ir_tripped;
+
+
 
 void setup() {
   //Ultrasonic
@@ -30,8 +37,10 @@ void setup() {
   digitalWrite(trigPin, LOW);
   delay(1000);
 
+
   //Infared
-  //TODO//
+	pinMode(irPin, INPUT);
+
 
   //Motion
   //TODO//
@@ -45,14 +54,22 @@ void loop() {
   //Detection Information for Ultrasonic
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
-
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-
-
   duration = pulseIn(echoPin, HIGH, 5000);
 
+
+  //IR Sensor Detection
+  if(digitalRead(irPin) == LOW && !passing)
+      {
+        Serial.println("Tripped IR");
+        ir_tripped = true;
+        when_ir_tripped = millis();
+        passing = true;
+      }
+
+  
   //Nothing detected
   if (duration == 0) {
     if (testing) {
@@ -63,17 +80,28 @@ void loop() {
 
     //Stops the counter, returns duration covered (The end of the train has passed)
     if (covered) {
-      duration_covered = millis() - when_covered;
+      duration_covered_us = millis() - when_covered;
       Serial.println("");
-      Serial.print("Covered for (millis):");
-      Serial.println(duration_covered);
+      Serial.print("Ultrasonic covered for (millis):");
+      Serial.println(duration_covered_us);
       covered = false;
-
+      passing = false;
     }
     
   }
   //Setting covered to true 
   else {
+    if (ir_tripped) {
+      duration_between_sensors = millis() - when_ir_tripped;
+      Serial.print("Distance between Sensors (millis):");
+      Serial.println(duration_between_sensors);
+      ir_tripped = false;
+
+      
+
+    }
+
+
     //Only sets 'when_covered' the first time the sensor detects it is covered
     if (!covered) {
       when_covered = millis();
@@ -97,5 +125,7 @@ void loop() {
 
   }
 
-  delay(500);
+
+
+  delay(250);
 }
