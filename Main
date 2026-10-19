@@ -11,9 +11,9 @@ bool testing = false;
 
 //Global variables
 long duration_covered_us;
-long duration_between_sensors;
-long distance_btw_sensors = 100;  // Declare this before upload. Measured in cm
-long speed;
+float duration_between_sensors;
+float distance_btw_sensors = 18;  // Declare this before upload. Measured in cm
+float speed;
 
 //Ultrasound Variables
 long when_us_covered;
@@ -32,6 +32,7 @@ long when_ir_tripped;
 
 //TODO Motion Sensing
 int motion_val = 0; //high or low
+int previous_motion = LOW;
 
 
 void setup() {
@@ -63,10 +64,10 @@ void loop() {
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH, 5000); //How long between out and in.
 
-
   motion_val = digitalRead(motionPin);
-  if (motion_val == HIGH) {
-    //Serial.println("Motion triggered");
+  if (motion_val != previous_motion) {
+     Serial.println("Motion triggered!");
+     previous_motion = motion_val;
   } 
 
   //IR Sensor Detection, when ir pin is low it declares that the IR has been tripped
@@ -110,7 +111,7 @@ void loop() {
         Serial.println("");
         Serial.print("Ultrasonic covered for (millis):");
         Serial.println(duration_covered_us);
-
+        
       }
 
 
@@ -126,12 +127,16 @@ void loop() {
     //Get time between sensors
     if (ir_tripped) {
       duration_between_sensors = millis() - when_ir_tripped;
-      Serial.print("Distance between Sensors (millis):");
-      Serial.println(duration_between_sensors);
-      Serial.print("Speed in cm/s");
       speed = distance_btw_sensors/(duration_between_sensors/1000);
-      Serial.println(speed);
+      //Serial.print("Train passed");
+      Serial.print("Distance between Sensors = ");
+      Serial.print(duration_between_sensors);
+      Serial.print(" milis");
+      Serial.print(" | Speed = ");
+      Serial.print(speed);
+      Serial.println(" cm/s");
       ir_tripped = false;
+      
     }
 
 
