@@ -11,13 +11,13 @@ bool testing = false;
 //Global variables
 long duration_covered_us;
 long duration_between_sensors;
-
+long Distance_btw_sensors = 1;  // Declare this before upload. Measured in cm
 
 //Ultrasound Variables
-long when_covered;
-bool covered = false;
+long when_us_covered;
+long first_uncovered;
+bool ultrasonic_covered = false;
 
-//TODO account for breaks in the train
 long when_uncovered;
 long duration_uncovered;
 bool just_uncovered = false;
@@ -27,6 +27,8 @@ bool just_uncovered = false;
 bool ir_tripped = false;
 bool passing = false;
 long when_ir_tripped;
+
+//TODO Motion Sensing
 
 
 
@@ -57,10 +59,10 @@ void loop() {
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH, 5000);
+  duration = pulseIn(echoPin, HIGH, 5000); //How long between out and in.
 
 
-  //IR Sensor Detection
+  //IR Sensor Detection, when ir pin is low it declares that the IR has been tripped
   if(digitalRead(irPin) == LOW && !passing)
       {
         Serial.println("Tripped IR");
@@ -70,44 +72,68 @@ void loop() {
       }
 
   
-  //Nothing detected
+  //Nothing detected by Ultrasonic
   if (duration == 0) {
     if (testing) {
     Serial.println("No echo detected!");
     }
-    //TODO check for breaks in the train
 
 
     //Stops the counter, returns duration covered (The end of the train has passed)
-    if (covered) {
-      duration_covered_us = millis() - when_covered;
-      Serial.println("");
-      Serial.print("Ultrasonic covered for (millis):");
-      Serial.println(duration_covered_us);
-      covered = false;
-      passing = false;
+    if (ultrasonic_covered) {
+
+      //First time after being that it is uncovered it waits 
+
+      if (!just_uncovered) {
+
+        //Thrown just in case their is a gap
+        just_uncovered = true;
+        when_uncovered = millis();
+
+        //How long between covered and uncovered
+        duration_covered_us = millis() - when_us_covered;
+      }
+    
+      //Only fully print the distance when the gap is greater than t=1000.
+      //Should help to prevent errors due to gaps in the train
+      if (millis() - when_uncovered > 1000 && when_uncovered != 0) {
+        ultrasonic_covered = false;
+        passing = false;
+        Serial.print("Train passed");
+        Serial.println("");
+        Serial.print("Ultrasonic covered for (millis):");
+        Serial.println(duration_covered_us);
+      }
+
+
+    
+
+    
     }
     
   }
-  //Setting covered to true 
+  //Detec  ting when the ultrasonic is covered  
   else {
+
+    //Get time between sensors
     if (ir_tripped) {
       duration_between_sensors = millis() - when_ir_tripped;
       Serial.print("Distance between Sensors (millis):");
       Serial.println(duration_between_sensors);
       ir_tripped = false;
-
-      
-
     }
 
 
-    //Only sets 'when_covered' the first time the sensor detects it is covered
-    if (!covered) {
-      when_covered = millis();
-      covered = true;
+    //This is a Reset if the us sensor was previosuly uncovered
+    when_uncovered = 0;
+    just_uncovered = false;
+
+    //Only sets 'when_us_covered' the first time the sensor detects it is covered
+    if (!ultrasonic_covered) {
+      when_us_covered = millis();
+      ultrasonic_covered = true;
     }
-    distance = duration * 0.0343 / 2.0;
+    
 
 
 
@@ -115,17 +141,17 @@ void loop() {
 
     //Debug Distance information
     if (testing) {
+      distance = duration * 0.0343 / 2.0;
       Serial.print("Duration: ");
       Serial.print(duration);
       Serial.print(" us   Distance: ");
       Serial.print(distance);
       Serial.println(" cm");
     }
-    //End Debug Distance information
 
   }
 
 
 
-  delay(250);
+  delay(50);
 }
